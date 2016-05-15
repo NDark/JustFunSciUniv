@@ -3,8 +3,11 @@ using System.Collections;
 
 public class RotateToVec : MonoBehaviour 
 {
-	public GameObject targetObj = null ;
-	public float dotValue = 0.0f ;
+	public bool m_ActiveRotate = false ;
+	public Transform m_TargetTransform ;
+	public float m_RotateSpeed = 0.1f ;
+	public float m_DotValue = 0.0f ;
+	
 	// Use this for initialization
 	void Start () 
 	{
@@ -15,15 +18,23 @@ public class RotateToVec : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
-		if( targetObj )
+		if( true == m_ActiveRotate )
 		{
-			dotValue = Vector3.Dot ( targetObj.transform.forward , this.gameObject.transform.forward ) ;
-			if( dotValue < 1.0f )
+			m_DotValue = Vector3.Dot ( this.gameObject.transform.forward 
+				, m_TargetTransform.forward ) ;
+			
+			if( m_DotValue < 1.0f )
 			{
-				targetObj.transform.rotation = 
-					Quaternion.Lerp( targetObj.transform.rotation , this.gameObject.transform.rotation , 0.1f ) ;			
+				this.transform.rotation = 
+					Quaternion.Lerp( this.transform.rotation 
+					                , m_TargetTransform.rotation 
+					                , m_RotateSpeed ) ;			
+			}
+			else
+			{
+				m_ActiveRotate = false ;
 			}
 		}
-	
+		
 	}
 }
