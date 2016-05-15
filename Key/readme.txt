@@ -5,3 +5,5 @@ j name lower case letter 2016
 ndark
 taiwan
 TW
+
+org.ndark.jfsu
