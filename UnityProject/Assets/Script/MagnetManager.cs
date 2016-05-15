@@ -23,16 +23,10 @@ public class MagnetManager : MonoBehaviour
 		// will use dotFromNorthPole as a ratio
 		float dotFromNorthPole = Vector3.Dot ( _ReferenctPos.forward , vecToTarget ) ;
 		
-		float ratioOfN = 0.0f ;
-		if( dotFromNorthPole > 0.0f )
-		{
-			
-		}
-		else
-		{
-			dotFromNorthPole = -1 * dotFromNorthPole ;
-		}
 		
+		dotFromNorthPole = Mathf.Abs( dotFromNorthPole )  ;
+		
+		float ratioOfN = 0.0f ;
 		ratioOfN = Mathf.Clamp( dotFromNorthPole , 0.9f , 1.0f ) ;
 		ratioOfN = (dotFromNorthPole - 0.9f) * 10.0f ;
 		
@@ -51,12 +45,12 @@ public class MagnetManager : MonoBehaviour
 		// combine 
 		Vector3 combinedTangent = tangentVec * ( 1.0f - ratioOfN ) + toN * ratioOfN ;
 		
-		Debug.Log( "dotFromNorthPole=" + dotFromNorthPole );
-		Debug.Log( "ratioOfN=" + ratioOfN );
-		Debug.Log( "tangentVec=" + tangentVec );
-		Debug.Log( "toN=" + toN );
-		Debug.Log( "combinedTangent=" + combinedTangent );
-		
+//		Debug.Log( "dotFromNorthPole=" + dotFromNorthPole );
+//		Debug.Log( "ratioOfN=" + ratioOfN );
+//		Debug.Log( "tangentVec=" + tangentVec );
+//		Debug.Log( "toN=" + toN );
+//		Debug.Log( "combinedTangent=" + combinedTangent );
+
 		Quaternion ret = Quaternion.LookRotation( combinedTangent , upVec ) ;
 		return ret ;
 	}
