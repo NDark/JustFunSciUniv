@@ -6,7 +6,8 @@ public class MagnetManager : MonoBehaviour
 	public GameObject m_MagnetPrefab = null ;
 	public List<GameObject> m_Magnets = new List<GameObject>() ;
 	public GameObject m_VirtualMagnet = null ;
-	public GameObject m_TargetMagnets = null ;
+	public List<RotateToVec> m_TargetMagnetRotates = new List<RotateToVec>() ;
+	public GameObject m_TargetParent = null ;
 	
 	bool m_IsModied = false ;
 	
@@ -58,6 +59,8 @@ public class MagnetManager : MonoBehaviour
 	// Use this for initialization
 	void Start () 
 	{
+		CollectTargets() ;
+		
 		if( null != m_MagnetPrefab )
 		{
 			GameObject addObj = (GameObject) GameObject.Instantiate( m_MagnetPrefab ) ;
@@ -67,7 +70,8 @@ public class MagnetManager : MonoBehaviour
 				m_VirtualMagnet = addObj ;
 			}
 		}
-
+		
+		
 	}
 	
 	// Update is called once per frame
@@ -83,13 +87,32 @@ public class MagnetManager : MonoBehaviour
 	{
 		if( null != m_VirtualMagnet )
 		{
-			RotateToVec rotate = m_TargetMagnets.GetComponent<RotateToVec>() ;
-			if( null != rotate )
+			for( int i = 0 ; i < m_TargetMagnetRotates.Count ; ++i )
 			{
-				rotate.m_ReferenceTransform = m_VirtualMagnet.transform ;
-				rotate.CalculateTargetPose() ;
+				if( null != m_TargetMagnetRotates[ i ] )
+				{
+					m_TargetMagnetRotates[ i ].m_ReferenceTransform = m_VirtualMagnet.transform ;
+					m_TargetMagnetRotates[ i ].CalculateTargetPose() ;
+				}			
 			}
+
 		}
 	}
 	
+	void CollectTargets()
+	{
+		Transform trans = null ;
+		for( int i = 0 ; i < m_TargetParent.transform.childCount ; ++i )
+		{
+			trans = m_TargetParent.transform.GetChild( i ) ;
+			if( null != trans )
+			{
+				RotateToVec rotate = trans.gameObject.GetComponent<RotateToVec>() ;
+				if( null != rotate )
+				{
+					m_TargetMagnetRotates.Add( rotate ) ;
+				}
+			}
+		}
+	}
 }
