@@ -86,8 +86,8 @@ public class MagnetManager : MonoBehaviour
 			RotateToVec rotate = m_TargetMagnets.GetComponent<RotateToVec>() ;
 			if( null != rotate )
 			{
-				rotate.m_ActiveRotate = true ;
 				rotate.m_ReferenceTransform = m_VirtualMagnet.transform ;
+				rotate.CalculateTargetPose() ;
 			}
 		}
 	}
