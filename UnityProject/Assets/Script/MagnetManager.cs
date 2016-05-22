@@ -6,8 +6,14 @@ public class MagnetManager : MonoBehaviour
 	public GameObject m_MagnetPrefab = null ;
 	public List<GameObject> m_Magnets = new List<GameObject>() ;
 	public GameObject m_VirtualMagnet = null ;
+	public List<GameObject> m_PotentialVirtualMagnets = new List<GameObject>() ;
 	public List<RotateToVec> m_TargetMagnetRotates = new List<RotateToVec>() ;
 	public GameObject m_TargetParent = null ;
+	public GameObject m_VirtualParent = null ;
+	
+	
+	public Vector3 m_VirtualMagnetPosition = Vector3.zero ;
+	public Vector3 m_VirtualMagnetForward = Vector3.zero ;
 	
 	bool m_IsModied = false ;
 	
@@ -61,15 +67,10 @@ public class MagnetManager : MonoBehaviour
 	{
 		CollectTargets() ;
 		
-		if( null != m_MagnetPrefab )
-		{
-			GameObject addObj = (GameObject) GameObject.Instantiate( m_MagnetPrefab ) ;
-			if( null != addObj )
-			{
-				addObj.name = "magnet" ;
-				m_VirtualMagnet = addObj ;
-			}
-		}
+		CollectPresetVirtuals() ;
+		
+		GenerateVirtualMagnet() ;
+
 		
 		
 	}
@@ -114,5 +115,49 @@ public class MagnetManager : MonoBehaviour
 				}
 			}
 		}
+	}
+	
+	void CollectPresetVirtuals()
+	{
+		Transform trans = null ;
+		for( int i = 0 ; i < m_VirtualParent.transform.childCount ; ++i )
+		{
+			trans = m_VirtualParent.transform.GetChild( i ) ;
+			if( null != trans )
+			{
+				m_PotentialVirtualMagnets.Add( trans.gameObject ) ;
+			}
+		}
+	}
+
+	void GenerateVirtualMagnet()
+	{
+		if( null != m_MagnetPrefab )
+		{
+			CalculateVirtualMagnetPose () ;
+		
+			m_VirtualMagnet = new GameObject() ;
+			m_VirtualMagnet.name = "VirtualMagnet" ;
+			m_VirtualMagnet.transform.position = m_VirtualMagnetPosition ;
+			m_VirtualMagnet.transform.rotation = Quaternion.LookRotation( m_VirtualMagnetForward ) ;
+		}
+	}	
+	
+	void CalculateVirtualMagnetPose ()
+	{
+		Vector3 sumVec = Vector3.zero ;
+		Vector3 directionSum = Vector3.zero ;
+		int count = m_PotentialVirtualMagnets.Count ;
+		foreach( GameObject obj in m_PotentialVirtualMagnets )
+		{
+			sumVec += obj.transform.position ;
+			directionSum += obj.transform.forward ;
+		}
+		
+		sumVec *= ( 1.0f / count ) ;
+		m_VirtualMagnetPosition = sumVec ;
+		directionSum *= ( 1.0f / count ) ;
+		m_VirtualMagnetForward = directionSum ;
+		
 	}
 }
