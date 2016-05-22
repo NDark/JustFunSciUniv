@@ -65,6 +65,8 @@ public class MagnetManager : MonoBehaviour
 	// Use this for initialization
 	void Start () 
 	{
+		GenerateRandomTargets() ;
+		
 		CollectTargets() ;
 		
 		CollectPresetVirtuals() ;
@@ -98,6 +100,29 @@ public class MagnetManager : MonoBehaviour
 			}
 
 		}
+	}
+	
+	void GenerateRandomTargets()
+	{
+		int generatingNum = 10 ;
+		float size = 5.0f ;
+	
+		Vector3 randomPos = Vector3.zero ;
+		
+		for( int i = 0 ; i < generatingNum ; ++i )
+		{
+			GameObject addObj = (GameObject) GameObject.Instantiate( m_MagnetPrefab ) ;
+			if( null != addObj )
+			{
+				addObj.name = "magnet" + i.ToString() ;
+				randomPos = Random.onUnitSphere ;
+				randomPos *= size ;
+				randomPos.z = 0 ;
+				addObj.transform.position = randomPos ;
+				addObj.transform.parent = m_TargetParent.transform ;
+			}		
+		}
+
 	}
 	
 	void CollectTargets()
