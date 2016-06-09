@@ -290,18 +290,32 @@ public class MagnetManager : MonoBehaviour
 	void CalculateVirtualMagnetPose ()
 	{
 		Vector3 sumVec = Vector3.zero ;
-		Vector3 directionSum = Vector3.zero ;
 		int count = m_PotentialVirtualMagnets.Count ;
 		foreach( GameObject obj in m_PotentialVirtualMagnets )
 		{
 			sumVec += obj.transform.position ;
-			directionSum += obj.transform.forward ;
 		}
 		
 		sumVec *= ( 1.0f / count ) ;
 		m_VirtualMagnetPosition = sumVec ;
-		directionSum *= ( 1.0f / count ) ;
-		m_VirtualMagnetForward = directionSum ;
+		
+		// find the longest object
+		float maxDist = 0.0f ;
+		Vector3 maxVec = Vector3.zero ;
+		foreach( GameObject obj in m_PotentialVirtualMagnets )
+		{
+			Vector3 distVec = obj.transform.position - sumVec ;
+			float sMag = distVec.sqrMagnitude ;
+			if( sMag > maxDist )
+			{
+				maxDist = sMag ;
+				maxVec = distVec ;
+			}
+		}
+		
+		maxVec.Normalize() ;
+		
+		m_VirtualMagnetForward = maxVec ;
 		
 	}
 	
