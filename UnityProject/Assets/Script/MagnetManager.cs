@@ -111,6 +111,8 @@ public class MagnetManager : MonoBehaviour
 		*/
 		GenerateVirtualMagnet() ;
 		
+		RefineMagnetAsVirtualMagnet() ;
+		
 	}
 	
 	public static Quaternion CalculateMagnetDirection( Transform _ReferenctPos , Vector3 _TargetPosition )
@@ -302,4 +304,13 @@ public class MagnetManager : MonoBehaviour
 		m_VirtualMagnetForward = directionSum ;
 		
 	}
+	
+	private void RefineMagnetAsVirtualMagnet()
+	{
+		foreach( GameObject obj in m_PotentialVirtualMagnets )
+		{
+			obj.transform.rotation = m_VirtualMagnet.transform.rotation ;
+		}
+	}
+	
 }
