@@ -1,6 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+public class RelationHub
+{
+	public GameObject Me = null ;
+	public List<GameObject> Friends = new List<GameObject>() ;
+}
+
 public class MagnetManager : MonoBehaviour 
 {
 	public GameObject m_MagnetPrefab = null ;
@@ -15,11 +21,96 @@ public class MagnetManager : MonoBehaviour
 	public Vector3 m_VirtualMagnetPosition = Vector3.zero ;
 	public Vector3 m_VirtualMagnetForward = Vector3.zero ;
 	
+	private float m_VirtualMagnetMaximumDistance = 2.0f ;
+	
 	bool m_IsModied = false ;
 	
 	public void CalculateVirtualMagnet()
 	{
-	
+		// scan all in target and collect those groups
+		List<RelationHub> relations = new List<RelationHub>() ;
+		for( int i = 0 ; i < m_TargetMagnetRotates.Count ; ++i )
+		{
+			GameObject me = m_TargetMagnetRotates[ i ].gameObject ;
+			RelationHub relation = null ;
+			for( int j = 0 ; j < m_TargetMagnetRotates.Count ; ++j )
+			{
+				if( j == i )
+					continue ;
+					
+				GameObject her = m_TargetMagnetRotates[ j ].gameObject ;	
+				float distance = Vector3.Distance( me.transform.position , her.transform.position ) ;
+				if( distance < m_VirtualMagnetMaximumDistance )
+				{
+					if( null == relation )
+					{
+						relation = new RelationHub() ;
+						relation.Me = me ;
+					}
+					
+					relation.Friends.Add( her ) ;
+					
+				}
+			}
+			if( null != relation )
+			{
+				Debug.Log("relation.Me.name=" + relation.Me.name );
+				Debug.Log("relation.Friends.Count=" + relation.Friends.Count );
+				relations.Add( relation ) ;
+			}
+		}
+		
+		Debug.Log("relations.Count=" + relations.Count );
+		
+		// find out the largest group.
+		
+		int maxFriends = 0 ;
+		int maxIndex = -1 ;
+		for( int k = 0 ; k < relations.Count ; ++k )
+		{
+			if( relations[ k ].Friends.Count > maxFriends )
+			{
+				maxFriends = relations[ k ].Friends.Count ;
+				maxIndex = k ;
+			}
+		}
+		
+		if( -1 == maxIndex )
+		{
+			Debug.LogWarning("There is no such biggest group");
+			return ;
+		}
+		
+		// move the largest group from m_TargetMagnetRotates 
+		// into m_PotentialVirtualMagnets
+		// and then they can be calculated into virtual magnet.
+		RelationHub maxGroup = relations[ maxIndex ] ;
+		maxGroup.Me.gameObject.transform.parent = m_VirtualParent.transform ;
+		for( int m = 0 ; m < maxGroup.Friends.Count ; ++m )
+		{
+			maxGroup.Friends[m].transform.parent = m_VirtualParent.transform ;
+		}
+		
+		
+		
+		/**
+		Collect preset target in m_TargetParent to m_TargetMagnetRotates
+		2nd time
+		*/
+		CollectTargets() ;
+		
+		/**
+		Collect preset virtual in m_VirtualParent to m_PotentialVirtualMagnets
+		2nd time
+		*/
+		CollectPresetVirtuals() ;
+		
+		
+		/**
+		by using m_PotentialVirtualMagnets to generate a virtual magnet.
+		*/
+		GenerateVirtualMagnet() ;
+		
 	}
 	
 	public static Quaternion CalculateMagnetDirection( Transform _ReferenctPos , Vector3 _TargetPosition )
@@ -65,13 +156,29 @@ public class MagnetManager : MonoBehaviour
 	// Use this for initialization
 	void Start () 
 	{
-		GenerateRandomTargets() ;
+		GenerateRandomTargets() ;// generate to m_TargetParent
 		
+		
+		
+		
+		/**
+		Collect preset target in m_TargetParent to m_TargetMagnetRotates
+		1st time.
+		*/
 		CollectTargets() ;
 		
+		/**
+		Collect preset virtual in m_VirtualParent to m_PotentialVirtualMagnets
+		1st time.
+		*/
 		CollectPresetVirtuals() ;
 		
-		GenerateVirtualMagnet() ;
+		
+		/**
+		scan target to make them change into m_PotentialVirtualMagnets
+		*/
+		CalculateVirtualMagnet() ;
+		
 
 		
 		
@@ -104,6 +211,11 @@ public class MagnetManager : MonoBehaviour
 	
 	void GenerateRandomTargets()
 	{
+		if( null == m_MagnetPrefab )
+		{
+			return ;
+		}
+		
 		int generatingNum = 10 ;
 		float size = 5.0f ;
 	
@@ -127,6 +239,7 @@ public class MagnetManager : MonoBehaviour
 	
 	void CollectTargets()
 	{
+		m_TargetMagnetRotates.Clear() ;
 		Transform trans = null ;
 		for( int i = 0 ; i < m_TargetParent.transform.childCount ; ++i )
 		{
@@ -145,6 +258,7 @@ public class MagnetManager : MonoBehaviour
 	void CollectPresetVirtuals()
 	{
 		Transform trans = null ;
+		m_PotentialVirtualMagnets.Clear() ;
 		for( int i = 0 ; i < m_VirtualParent.transform.childCount ; ++i )
 		{
 			trans = m_VirtualParent.transform.GetChild( i ) ;
@@ -157,15 +271,18 @@ public class MagnetManager : MonoBehaviour
 
 	void GenerateVirtualMagnet()
 	{
-		if( null != m_MagnetPrefab )
-		{
-			CalculateVirtualMagnetPose () ;
+
+		// calculate all object in m_PotentialVirtualMagnets
+		CalculateVirtualMagnetPose () ;
 		
+		if( null == m_VirtualMagnet )
+		{
 			m_VirtualMagnet = new GameObject() ;
 			m_VirtualMagnet.name = "VirtualMagnet" ;
-			m_VirtualMagnet.transform.position = m_VirtualMagnetPosition ;
-			m_VirtualMagnet.transform.rotation = Quaternion.LookRotation( m_VirtualMagnetForward ) ;
 		}
+		
+		m_VirtualMagnet.transform.position = m_VirtualMagnetPosition ;
+		m_VirtualMagnet.transform.rotation = Quaternion.LookRotation( m_VirtualMagnetForward ) ;
 	}	
 	
 	void CalculateVirtualMagnetPose ()
