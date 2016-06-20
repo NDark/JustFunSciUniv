@@ -16,7 +16,9 @@ public class MagnetManager : MonoBehaviour
 	public List<RotateToVec> m_TargetMagnetRotates = new List<RotateToVec>() ;
 	public GameObject m_TargetParent = null ;
 	public GameObject m_VirtualParent = null ;
-	
+	public Material m_MagnetMaterialBoth = null ;
+	public Material m_MagnetMaterialNorth = null ;
+	public Material m_MagnetMaterialSouth = null ;
 	
 	public Vector3 m_VirtualMagnetPosition = Vector3.zero ;
 	public Vector3 m_VirtualMagnetForward = Vector3.zero ;
@@ -54,13 +56,13 @@ public class MagnetManager : MonoBehaviour
 			}
 			if( null != relation )
 			{
-				Debug.Log("relation.Me.name=" + relation.Me.name );
-				Debug.Log("relation.Friends.Count=" + relation.Friends.Count );
+				// Debug.Log("relation.Me.name=" + relation.Me.name );
+				// Debug.Log("relation.Friends.Count=" + relation.Friends.Count );
 				relations.Add( relation ) ;
 			}
 		}
 		
-		Debug.Log("relations.Count=" + relations.Count );
+		// Debug.Log("relations.Count=" + relations.Count );
 		
 		// find out the largest group.
 		
@@ -269,6 +271,7 @@ public class MagnetManager : MonoBehaviour
 				m_PotentialVirtualMagnets.Add( trans.gameObject ) ;
 			}
 		}
+		
 	}
 
 	void GenerateVirtualMagnet()
@@ -316,6 +319,7 @@ public class MagnetManager : MonoBehaviour
 		maxVec.Normalize() ;
 		
 		m_VirtualMagnetForward = maxVec ;
+		Debug.LogWarning("m_VirtualMagnetForward" + m_VirtualMagnetForward);
 		
 	}
 	
@@ -325,6 +329,69 @@ public class MagnetManager : MonoBehaviour
 		{
 			obj.transform.rotation = m_VirtualMagnet.transform.rotation ;
 		}
+		
+		Vector3 virtualMagnetPos = m_VirtualMagnet.transform.position ;
+		float num = m_PotentialVirtualMagnets.Count ;
+		// modify their position to let then stick together
+		for( int i = 0 ; i < num; ++i )
+		{
+			m_PotentialVirtualMagnets[ i ].transform.position 
+				= virtualMagnetPos + m_VirtualMagnetForward * (i - (num-1)*0.5f)  ;
+		}
+		
+		ModifyMaterialForPotentialVirtualMagnets() ;
 	}
 	
+	private void ModifyMaterialForPotentialVirtualMagnets() 
+	{
+		Vector3 virtualMagnetCenter = m_VirtualMagnetPosition ;
+		Vector3 virtualMagnetDirection = m_VirtualMagnetForward ;
+		Vector3 eachPos ;
+		Vector3 toEachVec ;
+		float dotResult = 0.0f ;
+		float secondDotResult = 0.0f ;
+		Renderer[] renderers = null ;
+		
+		Transform trans = null ;		
+		for( int i = 0 ; i < m_PotentialVirtualMagnets.Count ; ++i )
+		{
+			eachPos = m_PotentialVirtualMagnets[ i ].transform.position ;
+			toEachVec = eachPos - virtualMagnetCenter ;
+			toEachVec.Normalize() ;
+			dotResult = Vector3.Dot (toEachVec,virtualMagnetDirection );
+			renderers = m_PotentialVirtualMagnets[i].GetComponentsInChildren<Renderer>() ;
+			foreach( Renderer renderer in renderers ) 
+			{
+
+				if(dotResult>0.0f)
+				{
+					renderer.material = m_MagnetMaterialNorth ;
+				}
+				else if(dotResult<0.0f)
+				{
+					renderer.material = m_MagnetMaterialSouth ;
+					
+				}
+				else
+				{
+					toEachVec = renderer.gameObject.transform.position - virtualMagnetCenter ;
+					secondDotResult = Vector3.Dot (toEachVec,virtualMagnetDirection );
+					
+					if(secondDotResult>0.0f)
+					{
+						renderer.material = m_MagnetMaterialNorth ;
+					}
+					else if(secondDotResult<0.0f)
+					{
+						renderer.material = m_MagnetMaterialSouth ;
+					}
+					else
+					{
+						renderer.material = m_MagnetMaterialBoth ;
+					}
+				}
+				
+			}
+		}	
+	}
 }
