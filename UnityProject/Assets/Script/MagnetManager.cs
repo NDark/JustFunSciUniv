@@ -335,8 +335,8 @@ public class MagnetManager : MonoBehaviour
 		// modify their position to let then stick together
 		for( int i = 0 ; i < num; ++i )
 		{
-			m_PotentialVirtualMagnets[ i ].transform.position 
-				= virtualMagnetPos + m_VirtualMagnetForward * (i - (num-1)*0.5f)  ;
+			MoveToPos moveToPos = m_PotentialVirtualMagnets[ i ].AddComponent<MoveToPos>() ;
+			moveToPos.m_DestinationPos = virtualMagnetPos + m_VirtualMagnetForward * (i - (num-1)*0.5f)  ;
 		}
 		
 		ModifyMaterialForPotentialVirtualMagnets() ;
@@ -352,10 +352,11 @@ public class MagnetManager : MonoBehaviour
 		float secondDotResult = 0.0f ;
 		Renderer[] renderers = null ;
 		
-		Transform trans = null ;		
+		
 		for( int i = 0 ; i < m_PotentialVirtualMagnets.Count ; ++i )
 		{
-			eachPos = m_PotentialVirtualMagnets[ i ].transform.position ;
+			MoveToPos moveToPos = m_PotentialVirtualMagnets[ i ].GetComponent<MoveToPos>() ;
+			eachPos = moveToPos.m_DestinationPos ;
 			toEachVec = eachPos - virtualMagnetCenter ;
 			toEachVec.Normalize() ;
 			dotResult = Vector3.Dot (toEachVec,virtualMagnetDirection );
@@ -374,8 +375,14 @@ public class MagnetManager : MonoBehaviour
 				}
 				else
 				{
-					toEachVec = renderer.gameObject.transform.position - virtualMagnetCenter ;
+					Vector3 localVec = renderer.gameObject.transform.position - m_PotentialVirtualMagnets[ i ].transform.position ;
+					toEachVec = eachPos + localVec - virtualMagnetCenter ;
+					toEachVec.Normalize() ;
 					secondDotResult = Vector3.Dot (toEachVec,virtualMagnetDirection );
+					
+					Debug.Log("eachPos" + eachPos);
+					Debug.Log("toEachVec" + toEachVec);
+					Debug.Log("secondDotResult" + secondDotResult);
 					
 					if(secondDotResult>0.0f)
 					{
