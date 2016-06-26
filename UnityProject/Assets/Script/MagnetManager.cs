@@ -26,6 +26,7 @@ public class MagnetManager : MonoBehaviour
 	private float m_VirtualMagnetMaximumDistance = 2.0f ;
 	
 	bool m_IsModifing = false ;
+	bool m_IsCheckingVirtualMagnetMoving = false ;
 	
 	public void CalculateVirtualMagnet()
 	{
@@ -184,7 +185,6 @@ public class MagnetManager : MonoBehaviour
 		CalculateVirtualMagnet() ;
 		
 
-		StartRotateTargetMagnetRotateMagnet() ;
 	}
 	
 	// Update is called once per frame
@@ -193,6 +193,14 @@ public class MagnetManager : MonoBehaviour
 		if( false == m_IsModifing 
 		)
 		{
+			if( true == m_IsCheckingVirtualMagnetMoving )
+			{
+				if( true == CheckIfVirtualMagnetIsStopped() )
+				{
+					StartRotateTargetMagnetRotateMagnet() ;
+					m_IsCheckingVirtualMagnetMoving = false ;
+				}
+			}
 		}
 	}
 	
@@ -342,6 +350,8 @@ public class MagnetManager : MonoBehaviour
 		}
 		
 		ModifyMaterialForPotentialVirtualMagnets() ;
+		
+		m_IsCheckingVirtualMagnetMoving = true ;
 	}
 	
 	private void ModifyMaterialForPotentialVirtualMagnets() 
@@ -403,4 +413,30 @@ public class MagnetManager : MonoBehaviour
 			}
 		}	
 	}
+	
+	bool CheckIfVirtualMagnetIsStopped()
+	{
+		bool ret = false ;
+		GameObject parent = null ;
+		foreach( GameObject obj in m_PotentialVirtualMagnets ) 
+		{
+			if( null != obj.transform.parent )
+			{
+				parent = obj.transform.parent.gameObject ;
+			}
+			break ;
+		}
+		
+		if( null != parent )
+		{
+			MoveToPos [] moveToPosVec = parent.GetComponentsInChildren<MoveToPos>() ;
+			
+			ret = ( moveToPosVec.Length <= 0 ) ;
+			Debug.Log("CheckIfVirtualMagnetIsStopped ret=" + ret );
+		}
+		
+		return ret ;
+	}
 }
+
+
