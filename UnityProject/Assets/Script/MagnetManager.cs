@@ -25,7 +25,7 @@ public class MagnetManager : MonoBehaviour
 	
 	private float m_VirtualMagnetMaximumDistance = 2.0f ;
 	
-	bool m_IsModied = false ;
+	bool m_IsModifing = false ;
 	
 	public void CalculateVirtualMagnet()
 	{
@@ -184,20 +184,19 @@ public class MagnetManager : MonoBehaviour
 		CalculateVirtualMagnet() ;
 		
 
-		
-		
+		StartRotateTargetMagnetRotateMagnet() ;
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
-		if( false == m_IsModied )
+		if( false == m_IsModifing 
+		)
 		{
-			UpdateMagnet() ;
 		}
 	}
 	
-	void UpdateMagnet()
+	void StartRotateTargetMagnetRotateMagnet()
 	{
 		if( null != m_VirtualMagnet )
 		{
@@ -209,8 +208,9 @@ public class MagnetManager : MonoBehaviour
 					m_TargetMagnetRotates[ i ].CalculateTargetPose() ;
 				}			
 			}
-
 		}
+		
+		m_TargetMagnetRotates.Clear() ;
 	}
 	
 	void GenerateRandomTargets()
@@ -251,10 +251,12 @@ public class MagnetManager : MonoBehaviour
 			if( null != trans )
 			{
 				RotateToVec rotate = trans.gameObject.GetComponent<RotateToVec>() ;
-				if( null != rotate )
+				if( null == rotate )
 				{
-					m_TargetMagnetRotates.Add( rotate ) ;
+					rotate = trans.gameObject.AddComponent<RotateToVec>() ;
 				}
+				
+				m_TargetMagnetRotates.Add( rotate ) ;
 			}
 		}
 	}

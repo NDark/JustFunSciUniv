@@ -22,7 +22,8 @@ public class RotateToVec : MonoBehaviour
 		}
 		else
 		{
-			m_ActiveRotate = false ;		
+			m_ActiveRotate = false ;
+			Component.Destroy( this ) ;		
 		}
 		
 	}
