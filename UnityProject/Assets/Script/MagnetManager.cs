@@ -329,7 +329,7 @@ public class MagnetManager : MonoBehaviour
 		maxVec.Normalize() ;
 		
 		m_VirtualMagnetForward = maxVec ;
-		Debug.LogWarning("m_VirtualMagnetForward" + m_VirtualMagnetForward);
+		// Debug.LogWarning("m_VirtualMagnetForward" + m_VirtualMagnetForward);
 		
 	}
 	
@@ -392,9 +392,9 @@ public class MagnetManager : MonoBehaviour
 					toEachVec.Normalize() ;
 					secondDotResult = Vector3.Dot (toEachVec,virtualMagnetDirection );
 					
-					Debug.Log("eachPos" + eachPos);
-					Debug.Log("toEachVec" + toEachVec);
-					Debug.Log("secondDotResult" + secondDotResult);
+					// Debug.Log("eachPos" + eachPos);
+					// Debug.Log("toEachVec" + toEachVec);
+					// Debug.Log("secondDotResult" + secondDotResult);
 					
 					if(secondDotResult>0.0f)
 					{
@@ -432,7 +432,6 @@ public class MagnetManager : MonoBehaviour
 			MoveToPos [] moveToPosVec = parent.GetComponentsInChildren<MoveToPos>() ;
 			
 			ret = ( moveToPosVec.Length <= 0 ) ;
-			Debug.Log("CheckIfVirtualMagnetIsStopped ret=" + ret );
 		}
 		
 		return ret ;
