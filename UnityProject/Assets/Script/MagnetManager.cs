@@ -7,6 +7,17 @@ public class RelationHub
 	public List<GameObject> Friends = new List<GameObject>() ;
 }
 
+public enum MagnetManagerState
+{
+	Invalid = 0 ,
+	Initializing ,
+	Calculating ,
+	WaitingVirtualMagnetAnimation ,
+	WaitingTargetMagnetAnimation ,
+	Valid ,
+	WaitingInput ,
+}
+
 public class MagnetManager : MonoBehaviour 
 {
 	public GameObject m_MagnetPrefab = null ;
@@ -23,10 +34,10 @@ public class MagnetManager : MonoBehaviour
 	public Vector3 m_VirtualMagnetPosition = Vector3.zero ;
 	public Vector3 m_VirtualMagnetForward = Vector3.zero ;
 	
+	public MagnetManagerState m_State = MagnetManagerState.Invalid ;
+	
 	private float m_VirtualMagnetMaximumDistance = 2.0f ;
 	
-	bool m_IsModifing = false ;
-	bool m_IsCheckingVirtualMagnetMoving = false ;
 	
 	public void CalculateVirtualMagnet()
 	{
@@ -116,6 +127,7 @@ public class MagnetManager : MonoBehaviour
 		
 		RefineMagnetAsVirtualMagnet() ;
 		
+		
 	}
 	
 	public static Quaternion CalculateMagnetDirection( Transform _ReferenctPos , Vector3 _TargetPosition )
@@ -161,28 +173,7 @@ public class MagnetManager : MonoBehaviour
 	// Use this for initialization
 	void Start () 
 	{
-		GenerateRandomTargets() ;// generate to m_TargetParent
-		
-		
-		
-		
-		/**
-		Collect preset target in m_TargetParent to m_TargetMagnetRotates
-		1st time.
-		*/
-		CollectTargets() ;
-		
-		/**
-		Collect preset virtual in m_VirtualParent to m_PotentialVirtualMagnets
-		1st time.
-		*/
-		CollectPresetVirtuals() ;
-		
-		
-		/**
-		scan target to make them change into m_PotentialVirtualMagnets
-		*/
-		CalculateVirtualMagnet() ;
+
 		
 
 	}
@@ -190,18 +181,32 @@ public class MagnetManager : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
-		if( false == m_IsModifing 
-		)
+		switch( m_State )
 		{
-			if( true == m_IsCheckingVirtualMagnetMoving )
-			{
-				if( true == CheckIfVirtualMagnetIsStopped() )
-				{
-					StartRotateTargetMagnetRotateMagnet() ;
-					m_IsCheckingVirtualMagnetMoving = false ;
-				}
-			}
+		case MagnetManagerState.Invalid :
+			m_State = MagnetManagerState.Initializing ;
+			break ;
+		case MagnetManagerState.Initializing :
+			Flow_MagnetManagerStateInitializing() ;
+			m_State = MagnetManagerState.Calculating ;
+			break ;
+		case MagnetManagerState.Calculating :
+			Flow_MagnetManagerStateCalculating() ;
+			m_State = MagnetManagerState.WaitingVirtualMagnetAnimation ;
+			break ;
+		case MagnetManagerState.WaitingVirtualMagnetAnimation :
+			Flow_MagnetManagerStateWaitingVirtualMagnetAnimation() ;
+			break ;
+		case MagnetManagerState.WaitingTargetMagnetAnimation :
+			break ;
+		case MagnetManagerState.Valid :
+			break ;
+		case MagnetManagerState.WaitingInput :
+			break ;
+			
 		}
+		
+		
 	}
 	
 	void StartRotateTargetMagnetRotateMagnet()
@@ -221,34 +226,7 @@ public class MagnetManager : MonoBehaviour
 		m_TargetMagnetRotates.Clear() ;
 	}
 	
-	void GenerateRandomTargets()
-	{
-		if( null == m_MagnetPrefab )
-		{
-			return ;
-		}
-		
-		int generatingNum = 10 ;
-		float size = 5.0f ;
-	
-		Vector3 randomPos = Vector3.zero ;
-		
-		for( int i = 0 ; i < generatingNum ; ++i )
-		{
-			GameObject addObj = (GameObject) GameObject.Instantiate( m_MagnetPrefab ) ;
-			if( null != addObj )
-			{
-				addObj.name = "magnet" + i.ToString() ;
-				randomPos = Random.onUnitSphere ;
-				randomPos *= size ;
-				randomPos.z = 0 ;
-				addObj.transform.position = randomPos ;
-				addObj.transform.parent = m_TargetParent.transform ;
-			}		
-		}
 
-	}
-	
 	void CollectTargets()
 	{
 		m_TargetMagnetRotates.Clear() ;
@@ -351,7 +329,6 @@ public class MagnetManager : MonoBehaviour
 		
 		ModifyMaterialForPotentialVirtualMagnets() ;
 		
-		m_IsCheckingVirtualMagnetMoving = true ;
 	}
 	
 	private void ModifyMaterialForPotentialVirtualMagnets() 
@@ -435,6 +412,76 @@ public class MagnetManager : MonoBehaviour
 		}
 		
 		return ret ;
+	}
+	
+	void Flow_MagnetManagerStateInitializing() 
+	{
+	
+		GenerateRandomTargets() ;// generate to m_TargetParent
+		
+		
+	}
+	
+	void GenerateRandomTargets()
+	{
+		if( null == m_MagnetPrefab )
+		{
+			return ;
+		}
+		
+		int generatingNum = 10 ;
+		float size = 5.0f ;
+		
+		Vector3 randomPos = Vector3.zero ;
+		
+		for( int i = 0 ; i < generatingNum ; ++i )
+		{
+			GameObject addObj = (GameObject) GameObject.Instantiate( m_MagnetPrefab ) ;
+			if( null != addObj )
+			{
+				addObj.name = "magnet" + i.ToString() ;
+				randomPos = Random.onUnitSphere ;
+				randomPos *= size ;
+				randomPos.z = 0 ;
+				addObj.transform.position = randomPos ;
+				addObj.transform.parent = m_TargetParent.transform ;
+			}		
+		}
+		
+	}
+
+	void Flow_MagnetManagerStateCalculating()
+	{
+		
+		
+		
+		/**
+		Collect preset target in m_TargetParent to m_TargetMagnetRotates
+		1st time.
+		*/
+		CollectTargets() ;
+		
+		/**
+		Collect preset virtual in m_VirtualParent to m_PotentialVirtualMagnets
+		1st time.
+		*/
+		CollectPresetVirtuals() ;
+		
+		
+		/**
+		scan target to make them change into m_PotentialVirtualMagnets
+		*/
+		CalculateVirtualMagnet() ;
+		
+	}	
+	
+	void Flow_MagnetManagerStateWaitingVirtualMagnetAnimation()
+	{
+		if( true == CheckIfVirtualMagnetIsStopped() )
+		{
+			StartRotateTargetMagnetRotateMagnet() ;
+			m_State = MagnetManagerState.WaitingTargetMagnetAnimation ;
+		}	
 	}
 }
 
