@@ -41,18 +41,47 @@ public class MagnetManager : MonoBehaviour
 	
 	public void CalculateVirtualMagnet()
 	{
+		// add preset virtual magnet to the first group
 		// scan all in target and collect those groups
 		List<RelationHub> relations = new List<RelationHub>() ;
-		for( int i = 0 ; i < m_TargetMagnets.Count ; ++i )
+		RelationHub firstGroup = null ;
+		foreach( GameObject obj in m_PotentialVirtualMagnets )
 		{
-			GameObject me = m_TargetMagnets[ i ] ;
+			if( null == firstGroup )
+			{
+				firstGroup = new RelationHub() ;
+				firstGroup.Me = obj ;
+				relations.Add( firstGroup ) ;
+				
+			}
+			else
+			{
+				firstGroup.Friends.Add( obj ) ;
+			}
+			
+		}
+		Debug.Log("relations.Count=" + relations.Count );
+		
+		List<GameObject> allMagnets = new List<GameObject>() ;
+		foreach( GameObject obj in m_PotentialVirtualMagnets )
+		{
+			allMagnets.Add( obj ) ;
+		}
+		foreach( GameObject obj in m_TargetMagnets )
+		{
+			allMagnets.Add( obj ) ;
+		}
+		
+		for( int i = 0 ; i < allMagnets.Count ; ++i )
+		{
+			GameObject me = allMagnets[ i ] ;
 			RelationHub relation = null ;
-			for( int j = 0 ; j < m_TargetMagnets.Count ; ++j )
+			for( int j = 0 ; j < allMagnets.Count ; ++j )
 			{
 				if( j == i )
 					continue ;
 					
-				GameObject her = m_TargetMagnets[ j ] ;	
+				GameObject her = allMagnets[ j ] ;	
 				float distance = Vector3.Distance( me.transform.position , her.transform.position ) ;
 				if( distance < m_VirtualMagnetMaximumDistance )
 				{
