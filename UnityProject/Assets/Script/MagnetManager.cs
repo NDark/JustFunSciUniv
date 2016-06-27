@@ -24,7 +24,7 @@ public class MagnetManager : MonoBehaviour
 	public List<GameObject> m_Magnets = new List<GameObject>() ;
 	public GameObject m_VirtualMagnet = null ;
 	public List<GameObject> m_PotentialVirtualMagnets = new List<GameObject>() ;
-	public List<RotateToVec> m_TargetMagnetRotates = new List<RotateToVec>() ;
+	public List<GameObject> m_TargetMagnets = new List<GameObject>();
 	public GameObject m_TargetParent = null ;
 	public GameObject m_VirtualParent = null ;
 	public Material m_MagnetMaterialBoth = null ;
@@ -43,16 +43,16 @@ public class MagnetManager : MonoBehaviour
 	{
 		// scan all in target and collect those groups
 		List<RelationHub> relations = new List<RelationHub>() ;
-		for( int i = 0 ; i < m_TargetMagnetRotates.Count ; ++i )
+		for( int i = 0 ; i < m_TargetMagnets.Count ; ++i )
 		{
-			GameObject me = m_TargetMagnetRotates[ i ].gameObject ;
+			GameObject me = m_TargetMagnets[ i ] ;
 			RelationHub relation = null ;
-			for( int j = 0 ; j < m_TargetMagnetRotates.Count ; ++j )
+			for( int j = 0 ; j < m_TargetMagnets.Count ; ++j )
 			{
 				if( j == i )
 					continue ;
 					
-				GameObject her = m_TargetMagnetRotates[ j ].gameObject ;	
+				GameObject her = m_TargetMagnets[ j ] ;	
 				float distance = Vector3.Distance( me.transform.position , her.transform.position ) ;
 				if( distance < m_VirtualMagnetMaximumDistance )
 				{
@@ -95,7 +95,7 @@ public class MagnetManager : MonoBehaviour
 			return ;
 		}
 		
-		// move the largest group from m_TargetMagnetRotates 
+		// move the largest group from m_TargetMagnets 
 		// into m_PotentialVirtualMagnets
 		// and then they can be calculated into virtual magnet.
 		RelationHub maxGroup = relations[ maxIndex ] ;
@@ -108,7 +108,7 @@ public class MagnetManager : MonoBehaviour
 		
 		
 		/**
-		Collect preset target in m_TargetParent to m_TargetMagnetRotates
+		Collect preset target in m_TargetParent to m_TargetMagnets
 		2nd time
 		*/
 		CollectTargets() ;
@@ -213,36 +213,33 @@ public class MagnetManager : MonoBehaviour
 	{
 		if( null != m_VirtualMagnet )
 		{
-			for( int i = 0 ; i < m_TargetMagnetRotates.Count ; ++i )
+			for( int i = 0 ; i < m_TargetMagnets.Count ; ++i )
 			{
-				if( null != m_TargetMagnetRotates[ i ] )
+				if( null != m_TargetMagnets[ i ] )
 				{
-					m_TargetMagnetRotates[ i ].m_ReferenceTransform = m_VirtualMagnet.transform ;
-					m_TargetMagnetRotates[ i ].CalculateTargetPose() ;
+					RotateToVec r = m_TargetMagnets[ i ].AddComponent<RotateToVec>() ;
+					if( null != r )
+					{
+						r.m_ReferenceTransform = m_VirtualMagnet.transform ;
+						r.CalculateTargetPose() ;
+					}
 				}			
 			}
 		}
 		
-		m_TargetMagnetRotates.Clear() ;
 	}
 	
 
 	void CollectTargets()
 	{
-		m_TargetMagnetRotates.Clear() ;
+		m_TargetMagnets.Clear() ;
 		Transform trans = null ;
 		for( int i = 0 ; i < m_TargetParent.transform.childCount ; ++i )
 		{
 			trans = m_TargetParent.transform.GetChild( i ) ;
 			if( null != trans )
 			{
-				RotateToVec rotate = trans.gameObject.GetComponent<RotateToVec>() ;
-				if( null == rotate )
-				{
-					rotate = trans.gameObject.AddComponent<RotateToVec>() ;
-				}
-				
-				m_TargetMagnetRotates.Add( rotate ) ;
+				m_TargetMagnets.Add( trans.gameObject ) ;
 			}
 		}
 	}
@@ -456,7 +453,7 @@ public class MagnetManager : MonoBehaviour
 		
 		
 		/**
-		Collect preset target in m_TargetParent to m_TargetMagnetRotates
+		Collect preset target in m_TargetParent to m_TargetMagnets
 		1st time.
 		*/
 		CollectTargets() ;
