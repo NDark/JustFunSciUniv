@@ -5,6 +5,67 @@ public class RelationHub
 {
 	public GameObject Me = null ;
 	public List<GameObject> Friends = new List<GameObject>() ;
+	
+	public bool IsInclude( GameObject _TestObj )
+	{
+	
+		for( int i = 0 ; i < this.Friends.Count ; ++i )
+		{
+			if( _TestObj == this.Friends[ i ] )
+			{
+				return true ;
+			}
+		}
+		
+		return false ;
+	}
+	
+	public bool IsNear( GameObject _TestObj , float _TestLimit )
+	{
+		float dist = 0.0f ;
+		
+		for( int i = 0 ; i < this.Friends.Count ; ++i )
+		{
+			dist = Vector3.Distance( _TestObj.transform.position 
+				, this.Friends[ i ].transform.position ) ;
+			if( dist < _TestLimit )
+			{
+				return true ;
+			}
+		}
+		return false ;
+	}
+	
+	
+	public float CalculateNearestDistance( RelationHub _TestGroup )
+	{
+		float minDist = float.MaxValue ;
+		float dist = 0.0f ;
+		
+		for( int i = 0 ; i < this.Friends.Count ; ++i )
+		{
+			for( int j = 0 ; j < _TestGroup.Friends.Count ; ++j )
+			{
+				dist = Vector3.Distance( _TestGroup.Friends[ j ].transform.position 
+				                        , this.Friends[ i ].transform.position ) ;
+				if( dist < minDist )
+				{
+					minDist = dist ;
+				}
+			}
+		}
+		
+		return minDist ;
+	}
+	
+	
+	public void MergeGroup( RelationHub _MergedGroup )
+	{
+		for( int i = 0 ; i < _MergedGroup.Friends.Count ; ++i )
+		{
+			this.Friends.Add( _MergedGroup.Friends[ i ] ) ;
+		}
+	}
 }
 
 public enum MagnetManagerState
@@ -38,29 +99,20 @@ public class MagnetManager : MonoBehaviour
 	
 	private float m_VirtualMagnetMaximumDistance = 2.0f ;
 	
-	
-	public void CalculateVirtualMagnet()
+	protected void CalculateAndDecideVirtuaMagnet()
 	{
-		// add preset virtual magnet to the first group
-		// scan all in target and collect those groups
-		List<RelationHub> relations = new List<RelationHub>() ;
-		RelationHub firstGroup = null ;
-		foreach( GameObject obj in m_PotentialVirtualMagnets )
-		{
-			if( null == firstGroup )
-			{
-				firstGroup = new RelationHub() ;
-				firstGroup.Me = obj ;
-				relations.Add( firstGroup ) ;
+		/**
+		From m_PotentialVirtualMagnets and m_TargetMagnets to collect allMagnets.
+		
+		For all group , collect possible neighbor arround this group.
+		Each test object shall be near to one member of this group.
+		
+		Find the largest group, and make it its children be the virtual parent.
 				
-			}
-			else
-			{
-				firstGroup.Friends.Add( obj ) ;
-			}
-			
-		}
-		Debug.Log("relations.Count=" + relations.Count );
+		Result:
+		
+		Make those virtual magnet to the children of m_VirtualParent.
+		*/
 		
 		List<GameObject> allMagnets = new List<GameObject>() ;
 		foreach( GameObject obj in m_PotentialVirtualMagnets )
@@ -72,38 +124,83 @@ public class MagnetManager : MonoBehaviour
 			allMagnets.Add( obj ) ;
 		}
 		
+		// create the first group.
+		List<RelationHub> relations = new List<RelationHub>() ;
+		RelationHub firstGroup = null ;
+		foreach( GameObject obj in m_PotentialVirtualMagnets )
+		{
+			if( null == firstGroup )
+			{
+				firstGroup = new RelationHub() ;
+				firstGroup.Me = obj ;
+				firstGroup.Friends.Add( obj ) ;
+				relations.Add( firstGroup ) ;
+				
+			}
+			else
+			{
+				firstGroup.Friends.Add( obj ) ;
+			}
+			
+		}
+		
+		Debug.Log("relations.Count=" + relations.Count );
+
+		// ignore those exist in first group
+		if( null != firstGroup )
+		{
+			for( int i = 0 ; i < allMagnets.Count ; ++i )
+			{
+				if( firstGroup.IsInclude( allMagnets[ i ] ) )
+				{
+					allMagnets[ i ] = null ;
+				}
+				
+			}				
+		}
+		
+		// create a first search
 		for( int i = 0 ; i < allMagnets.Count ; ++i )
 		{
+			if( null == allMagnets[ i ] )
+			{
+				continue ;
+			}
+			
 			GameObject me = allMagnets[ i ] ;
 			RelationHub relation = null ;
-			for( int j = 0 ; j < allMagnets.Count ; ++j )
+			
+			for( int j = i+1 ; j < allMagnets.Count ; ++j )
 			{
-				if( j == i )
+				if( null == allMagnets[ j ] )
+				{
 					continue ;
-					
+				}
+				
 				GameObject her = allMagnets[ j ] ;	
-				float distance = Vector3.Distance( me.transform.position , her.transform.position ) ;
+				float distance = Vector3.Distance( me.transform.position 
+					, her.transform.position ) ;
 				if( distance < m_VirtualMagnetMaximumDistance )
 				{
 					if( null == relation )
 					{
 						relation = new RelationHub() ;
 						relation.Me = me ;
+						relation.Friends.Add( me ) ;
+						// Debug.LogWarning("relations.Add" );		
+						relations.Add( relation ) ;
+						
 					}
-					
 					relation.Friends.Add( her ) ;
-					
 				}
-			}
-			if( null != relation )
-			{
-				// Debug.Log("relation.Me.name=" + relation.Me.name );
-				// Debug.Log("relation.Friends.Count=" + relation.Friends.Count );
-				relations.Add( relation ) ;
 			}
 		}
 		
-		// Debug.Log("relations.Count=" + relations.Count );
+		Debug.LogWarning("relations.Count=" + relations.Count );
+		
+		GraduatelyMergeRelations( relations ) ;
+		
+		Debug.LogWarning("relations.Count=" + relations.Count );
 		
 		// find out the largest group.
 		
@@ -111,6 +208,11 @@ public class MagnetManager : MonoBehaviour
 		int maxIndex = -1 ;
 		for( int k = 0 ; k < relations.Count ; ++k )
 		{
+			if( null == relations[ k ])
+			{
+				continue ;
+			}
+			
 			if( relations[ k ].Friends.Count > maxFriends )
 			{
 				maxFriends = relations[ k ].Friends.Count ;
@@ -133,6 +235,63 @@ public class MagnetManager : MonoBehaviour
 		{
 			maxGroup.Friends[m].transform.parent = m_VirtualParent.transform ;
 		}
+		
+	}
+	
+	protected void GraduatelyMergeRelations( List<RelationHub> _Groups )
+	{
+		bool touched = true ;
+		int count = 0 ;
+		int maxCount = 10 ;
+		while( touched && count < maxCount )
+		{
+			touched = false ;
+			// Debug.Log("count" + count );
+			++count ;
+			
+			for( int i = 0 ; i < _Groups.Count ; ++i )
+			{
+				if( null == _Groups [ i ])
+				{
+					continue ;
+				}
+
+				float tempDistance = 0.0f ;				
+				int minIndex = -1 ;
+				float minDistance = 999.99f ;
+				for( int j = i + 1 ; j < _Groups.Count ; ++j )
+				{
+					if( null == _Groups [ j ])
+					{
+						continue ;
+					}
+					
+					tempDistance = _Groups[i].CalculateNearestDistance( _Groups[j] ) ;
+					if( tempDistance < m_VirtualMagnetMaximumDistance )
+					{
+						if( tempDistance < minDistance )
+						{
+							minDistance = tempDistance ;
+							minIndex = j ;
+						}
+					}
+				}
+				
+				if( minIndex != -1 )
+				{
+					touched = true ;
+					_Groups[ i ].MergeGroup( _Groups[ minIndex ] ) ;
+					Debug.Log("_Groups[ i ].MergeGroup minIndex=" + minIndex ) ;
+					_Groups[ minIndex ] = null ;
+				}
+			}
+		}
+	}
+	
+	public void CalculateVirtualMagnet()
+	{
+		CalculateAndDecideVirtuaMagnet() ;
+
 		
 		
 		
@@ -313,6 +472,11 @@ public class MagnetManager : MonoBehaviour
 			sumVec += obj.transform.position ;
 		}
 		
+		if( 0 == count )
+		{
+			Debug.Log("0 == count");
+			return ;
+		}
 		sumVec *= ( 1.0f / count ) ;
 		m_VirtualMagnetPosition = sumVec ;
 		
