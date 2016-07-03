@@ -291,12 +291,15 @@ public class MagnetManager : MonoBehaviour
 		return ret ;
 	}
 
-	// Use this for initialization
-	void Start () 
+	public void TryEnterInputMode()
 	{
-
+		if( MagnetManagerState.Valid != m_State )
+		{
+			return ;
+		}
 		
-
+		ResetMaterialForPotentialVirtualMagnets() ;
+		m_State = MagnetManagerState.WaitingInput ;
 	}
 	
 	// Update is called once per frame
@@ -319,6 +322,7 @@ public class MagnetManager : MonoBehaviour
 			Flow_MagnetManagerStateWaitingVirtualMagnetAnimation() ;
 			break ;
 		case MagnetManagerState.WaitingTargetMagnetAnimation :
+			Flow_MagnetManagerStateWaitingTargetMagnetAnimation() ;
 			break ;
 		case MagnetManagerState.Valid :
 			break ;
@@ -605,6 +609,52 @@ public class MagnetManager : MonoBehaviour
 			StartRotateTargetMagnetRotateMagnet() ;
 			m_State = MagnetManagerState.WaitingTargetMagnetAnimation ;
 		}	
+	}
+	
+	void Flow_MagnetManagerStateWaitingTargetMagnetAnimation()
+	{
+		if( true == CheckIfAllTargetMagnetIsStopped() )
+		{
+			m_State = MagnetManagerState.Valid ;
+		}
+	}
+	
+	
+	bool CheckIfAllTargetMagnetIsStopped()
+	{
+		bool ret = false ;
+		GameObject parent = null ;
+		foreach( GameObject obj in m_TargetMagnets ) 
+		{
+			if( null != obj.transform.parent )
+			{
+				parent = obj.transform.parent.gameObject ;
+			}
+			break ;
+		}
+		
+		if( null != parent )
+		{
+			RotateToVec [] totates = parent.GetComponentsInChildren<RotateToVec>() ;
+
+			ret = ( totates.Length <= 0 ) ;
+		}
+		
+		return ret ;
+	}
+	
+	private void ResetMaterialForPotentialVirtualMagnets() 
+	{
+		Renderer[] renderers = null ;
+		
+		for( int i = 0 ; i < m_PotentialVirtualMagnets.Count ; ++i )
+		{
+			renderers = m_PotentialVirtualMagnets[i].GetComponentsInChildren<Renderer>() ;
+			foreach( Renderer renderer in renderers ) 
+			{
+				renderer.material = m_MagnetMaterialBoth ;
+			}
+		}		
 	}
 }
 
