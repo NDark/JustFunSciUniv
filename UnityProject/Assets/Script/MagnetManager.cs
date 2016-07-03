@@ -32,6 +32,9 @@ public class MagnetManager : MonoBehaviour
 	
 	private float m_VirtualMagnetMaximumDistance = 2.0f ;
 	
+	public UISprite m_HandButton = null ;
+	public UISprite m_StartButton = null ;
+	
 	protected void CalculateAndDecideVirtuaMagnet()
 	{
 		/**
@@ -291,6 +294,22 @@ public class MagnetManager : MonoBehaviour
 		return ret ;
 	}
 
+	public void TryStartCalculation()
+	{
+		if( MagnetManagerState.WaitingInput != m_State )
+		{
+			return ;
+		}
+		
+		if( null != m_StartButton )
+		{
+			NGUITools.SetActive( m_StartButton.gameObject , false ) ;
+		}
+		
+		ResetPotentialVirtualToTarget() ;
+		m_State = MagnetManagerState.Calculating ;
+	}
+	
 	public void TryEnterInputMode()
 	{
 		if( MagnetManagerState.Valid != m_State )
@@ -299,6 +318,14 @@ public class MagnetManager : MonoBehaviour
 		}
 		
 		ResetMaterialForPotentialVirtualMagnets() ;
+		if( null != m_StartButton )
+		{
+			NGUITools.SetActive( m_StartButton.gameObject , true ) ;
+		}
+		if( null != m_HandButton )
+		{
+			NGUITools.SetActive( m_HandButton.gameObject , false ) ;
+		}
 		m_State = MagnetManagerState.WaitingInput ;
 	}
 	
@@ -615,6 +642,10 @@ public class MagnetManager : MonoBehaviour
 	{
 		if( true == CheckIfAllTargetMagnetIsStopped() )
 		{
+			if( null != m_HandButton )
+			{
+				NGUITools.SetActive( m_HandButton.gameObject , true ) ;
+			}
 			m_State = MagnetManagerState.Valid ;
 		}
 	}
@@ -655,6 +686,14 @@ public class MagnetManager : MonoBehaviour
 				renderer.material = m_MagnetMaterialBoth ;
 			}
 		}		
+	}
+	
+	private void ResetPotentialVirtualToTarget()
+	{
+		for( int i = 0 ; i < m_PotentialVirtualMagnets.Count ; ++i )
+		{
+			m_PotentialVirtualMagnets[ i ].gameObject.transform.parent = m_TargetParent.transform ;
+		}	
 	}
 }
 
