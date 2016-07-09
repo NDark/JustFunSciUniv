@@ -15,7 +15,6 @@ public enum MagnetManagerState
 public class MagnetManager : MonoBehaviour 
 {
 	public GameObject m_MagnetPrefab = null ;
-	public List<GameObject> m_Magnets = new List<GameObject>() ;
 	public GameObject m_VirtualMagnet = null ;
 	public List<GameObject> m_PotentialVirtualMagnets = new List<GameObject>() ;
 	public List<GameObject> m_TargetMagnets = new List<GameObject>();
@@ -24,6 +23,8 @@ public class MagnetManager : MonoBehaviour
 	public Material m_MagnetMaterialBoth = null ;
 	public Material m_MagnetMaterialNorth = null ;
 	public Material m_MagnetMaterialSouth = null ;
+	public UISprite m_SelectionSprite = null ;
+	public Camera m_UICamera = null ;
 	
 	public Vector3 m_VirtualMagnetPosition = Vector3.zero ;
 	public Vector3 m_VirtualMagnetForward = Vector3.zero ;
@@ -709,6 +710,8 @@ public class MagnetManager : MonoBehaviour
 			m_IsPressed = true ;
 			m_PressedPos = Input.mousePosition ;
 			m_PressTime = Time.timeSinceLevelLoad ;
+			
+			
 		}
 		
 		if( true == m_IsPressed 
@@ -719,13 +722,22 @@ public class MagnetManager : MonoBehaviour
 			   && diffVec.magnitude < 5.0f )
 			{
 				// click
-				Debug.Log("diffVec.magnitude" + diffVec.magnitude );
+				// Debug.Log("diffVec.magnitude" + diffVec.magnitude );
 				
+				if( null == m_SelectObject )
+				{
+					FindMagnetByClick( Input.mousePosition ) ;
+				}
+				else
+				{
+					ClearSelection() ;
+				}
 			}
 			else
 			{
 				// slide
-				Debug.Log("diffVec" + diffVec );
+				// Debug.Log("diffVec" + diffVec );
+				ClearSelection() ;
 			}
 			
 			m_IsPressed = false ;
@@ -735,21 +747,79 @@ public class MagnetManager : MonoBehaviour
 		&& null != m_SelectObject )
 		{
 			// pan
-			/*
-			http://answers.unity3d.com/questions/540888/converting-mouse-position-to-world-stationary-came.html
-			*/
-			Vector3 world = Input.mousePosition ;
-			world.z = 20 ;
-			world = Camera.main.ScreenToWorldPoint( world ) ;
-			Vector3 viewport = Camera.main.ScreenToViewportPoint( Input.mousePosition ) ;
-			Debug.Log("Input.mousePosition" + Input.mousePosition );
-			Debug.Log("world" + world );
-			Debug.Log("viewport" + viewport );
-			m_SelectObject.transform.position = world ;
-			
+			MoveSelectionByMouse( Input.mousePosition ) ;
 		}
 		
 	}
+	
+	private void FindMagnetByClick( Vector3 _MousePosition )
+	{
+		Ray ray = Camera.main.ScreenPointToRay( _MousePosition ) ;
+		RaycastHit hitInfo = new RaycastHit() ;
+		if( true == Physics.Raycast( ray , out hitInfo ) )
+		{
+			GameObject hitObj = hitInfo.collider.gameObject ;
+			foreach( GameObject obj in m_TargetMagnets )
+			{
+				if( hitObj == obj )
+				{
+					EnableSelection(hitObj ) ;
+					return ;
+				}
+			}
+			
+			foreach( GameObject obj in this.m_PotentialVirtualMagnets )
+			{
+				if( hitObj == obj )
+				{
+					EnableSelection(hitObj ) ;
+					return ;
+				}
+			}
+		}
+		
+		ClearSelection() ;
+	}
+	
+	private void ClearSelection()
+	{
+		this.m_SelectObject = null ;	
+		this.m_SelectionSprite.enabled = false ;
+	}
+	
+	
+	private void EnableSelection( GameObject _Obj )
+	{
+		this.m_SelectObject = _Obj ;
+		
+		Vector3 screen = Camera.main.WorldToScreenPoint( _Obj.transform.position ) ;
+		screen.z = 0 ;
+		Vector3 viewport = m_UICamera.ScreenToWorldPoint( screen ) ;
+		
+		this.m_SelectionSprite.transform.position = viewport ;
+		this.m_SelectionSprite.enabled = true ;
+	}
+	
+	private void MoveSelectionByMouse( Vector3 _ScreenPos )
+	{
+		/*
+			http://answers.unity3d.com/questions/540888/converting-mouse-position-to-world-stationary-came.html
+		*/	
+		Vector3 world = _ScreenPos ;
+		world.z = 20 ;
+		world = Camera.main.ScreenToWorldPoint( world ) ;
+		m_SelectObject.transform.position = world ;
+		
+		/**
+		http://www.tasharen.com/forum/index.php?topic=7042.0
+		*/
+		Vector3 screen = Camera.main.WorldToScreenPoint( world ) ;
+		screen.z = 0 ;
+		Vector3 viewport = m_UICamera.ScreenToWorldPoint( screen ) ;
+		
+		this.m_SelectionSprite.transform.position = viewport ;
+	}
+	
 }
 
 
