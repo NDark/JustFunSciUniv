@@ -35,6 +35,11 @@ public class MagnetManager : MonoBehaviour
 	public UISprite m_HandButton = null ;
 	public UISprite m_StartButton = null ;
 	
+	public bool m_IsPressed = false ;
+	public Vector3 m_PressedPos = Vector3.zero ;
+	public float m_PressTime = 0.0f ;
+	public GameObject m_SelectObject = null ;
+	
 	protected void CalculateAndDecideVirtuaMagnet()
 	{
 		/**
@@ -354,6 +359,7 @@ public class MagnetManager : MonoBehaviour
 		case MagnetManagerState.Valid :
 			break ;
 		case MagnetManagerState.WaitingInput :
+			CheckInput() ;
 			break ;
 			
 		}
@@ -694,6 +700,55 @@ public class MagnetManager : MonoBehaviour
 		{
 			m_PotentialVirtualMagnets[ i ].gameObject.transform.parent = m_TargetParent.transform ;
 		}	
+	}
+	
+	private void CheckInput()
+	{
+		if( Input.GetMouseButtonDown( 0 ) )
+		{
+			m_IsPressed = true ;
+			m_PressedPos = Input.mousePosition ;
+			m_PressTime = Time.timeSinceLevelLoad ;
+		}
+		
+		if( true == m_IsPressed 
+			&& Input.GetMouseButtonUp( 0 ) )
+		{
+			Vector3 diffVec = Input.mousePosition - m_PressedPos ;
+			if( Time.timeSinceLevelLoad - m_PressTime < 0.3f 
+			   && diffVec.magnitude < 5.0f )
+			{
+				// click
+				Debug.Log("diffVec.magnitude" + diffVec.magnitude );
+				
+			}
+			else
+			{
+				// slide
+				Debug.Log("diffVec" + diffVec );
+			}
+			
+			m_IsPressed = false ;
+		}
+		
+		if( true == m_IsPressed 
+		&& null != m_SelectObject )
+		{
+			// pan
+			/*
+			http://answers.unity3d.com/questions/540888/converting-mouse-position-to-world-stationary-came.html
+			*/
+			Vector3 world = Input.mousePosition ;
+			world.z = 20 ;
+			world = Camera.main.ScreenToWorldPoint( world ) ;
+			Vector3 viewport = Camera.main.ScreenToViewportPoint( Input.mousePosition ) ;
+			Debug.Log("Input.mousePosition" + Input.mousePosition );
+			Debug.Log("world" + world );
+			Debug.Log("viewport" + viewport );
+			m_SelectObject.transform.position = world ;
+			
+		}
+		
 	}
 }
 
