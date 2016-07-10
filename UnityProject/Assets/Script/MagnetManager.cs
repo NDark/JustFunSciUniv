@@ -690,7 +690,14 @@ public class MagnetManager : MonoBehaviour
 			renderers = m_PotentialVirtualMagnets[i].GetComponentsInChildren<Renderer>() ;
 			foreach( Renderer renderer in renderers ) 
 			{
-				renderer.material = m_MagnetMaterialBoth ;
+				if( renderer.name.Contains( "N") )
+				{
+					renderer.material = m_MagnetMaterialNorth ;
+				}
+				else if( renderer.name.Contains( "S") )
+				{
+					renderer.material = m_MagnetMaterialSouth ;
+				}				
 			}
 		}		
 	}
@@ -744,7 +751,8 @@ public class MagnetManager : MonoBehaviour
 		}
 		
 		if( true == m_IsPressed 
-		&& null != m_SelectObject )
+		&& null != m_SelectObject 
+		   && Time.timeSinceLevelLoad - m_PressTime > 0.3f )
 		{
 			// pan
 			MoveSelectionByMouse( Input.mousePosition ) ;
