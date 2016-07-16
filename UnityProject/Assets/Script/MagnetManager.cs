@@ -795,6 +795,7 @@ public class MagnetManager : MonoBehaviour
 		
 		this.m_SelectObject = null ;	
 		this.m_SelectionSprite.enabled = false ;
+		this.m_SelectionSprite.SetDimensions( 40 , 40 ) ;
 	}
 	
 	
@@ -828,6 +829,7 @@ public class MagnetManager : MonoBehaviour
 		Vector3 viewport = m_UICamera.ScreenToWorldPoint( screen ) ;
 		
 		this.m_SelectionSprite.transform.position = viewport ;
+		this.m_SelectionSprite.SetDimensions( 80 , 80 ) ;
 	}
 	
 }
