@@ -791,7 +791,10 @@ public class MagnetManager : MonoBehaviour
 	
 	private void ClearSelection()
 	{
-		this.m_SelectObject.AddComponent<BoundaryMover>() ;
+		if( null != m_SelectObject )
+		{
+			this.m_SelectObject.AddComponent<BoundaryMover>() ;
+		}
 		
 		this.m_SelectObject = null ;	
 		this.m_SelectionSprite.enabled = false ;
