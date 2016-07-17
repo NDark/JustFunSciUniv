@@ -6,4 +6,4 @@ ndark
 taiwan
 TW
 
-org.ndark.jfsu
+org.ndark.justfunsciuniv
