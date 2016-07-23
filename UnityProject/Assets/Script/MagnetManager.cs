@@ -15,6 +15,8 @@ public enum MagnetManagerState
 public class MagnetManager : MonoBehaviour 
 {
 	public GameObject m_MagnetPrefab = null ;
+	public GameObject m_MagnetLinePrefab = null ;
+	
 	public GameObject m_VirtualMagnet = null ;
 	public List<GameObject> m_PotentialVirtualMagnets = new List<GameObject>() ;
 	public List<GameObject> m_TargetMagnets = new List<GameObject>();
@@ -332,6 +334,7 @@ public class MagnetManager : MonoBehaviour
 		{
 			NGUITools.SetActive( m_HandButton.gameObject , false ) ;
 		}
+		ShowMagnetLine( false );
 		m_State = MagnetManagerState.WaitingInput ;
 	}
 	
@@ -431,7 +434,10 @@ public class MagnetManager : MonoBehaviour
 		}
 		
 		m_VirtualMagnet.transform.position = m_VirtualMagnetPosition ;
-		m_VirtualMagnet.transform.rotation = Quaternion.LookRotation( m_VirtualMagnetForward ) ;
+		m_VirtualMagnet.transform.rotation = 
+			Quaternion.LookRotation( m_VirtualMagnetForward , -1*Vector3.forward ) ;
+		
+
 	}	
 	
 	void CalculateVirtualMagnetPose ()
@@ -578,6 +584,8 @@ public class MagnetManager : MonoBehaviour
 	void Flow_MagnetManagerStateInitializing() 
 	{
 	
+		ShowMagnetLine( false ) ;
+		
 		GenerateRandomTargets() ;// generate to m_TargetParent
 		
 		
@@ -642,6 +650,9 @@ public class MagnetManager : MonoBehaviour
 		{
 			StartRotateTargetMagnetRotateMagnet() ;
 			m_State = MagnetManagerState.WaitingTargetMagnetAnimation ;
+			ShowMagnetLine( true 
+			               , m_VirtualMagnetPosition 
+			               , m_VirtualMagnet.transform.rotation ) ;
 		}	
 	}
 	
@@ -654,6 +665,7 @@ public class MagnetManager : MonoBehaviour
 				NGUITools.SetActive( m_HandButton.gameObject , true ) ;
 			}
 			m_State = MagnetManagerState.Valid ;
+			
 		}
 	}
 	
@@ -834,7 +846,35 @@ public class MagnetManager : MonoBehaviour
 		this.m_SelectionSprite.transform.position = viewport ;
 		this.m_SelectionSprite.SetDimensions( 80 , 80 ) ;
 	}
+
+	private void ShowMagnetLine( bool _Show )
+	{
+		Vector3 _Pos = Vector3.zero ;
+		Quaternion _Rotation = Quaternion.identity ;
+		
+		ShowMagnetLine( _Show , _Pos , _Rotation ) ;
+		
+	}
 	
+	private void ShowMagnetLine( bool _Show 
+		, Vector3 _Pos 
+		, Quaternion _Rotation )
+	{
+		if( null == m_MagnetLinePrefab )
+		{
+			return ;
+		}
+		
+		if( true == _Show )
+		{
+			m_MagnetLinePrefab.transform.position = _Pos ;
+			m_MagnetLinePrefab.transform.rotation = _Rotation ;
+		}
+		
+		m_MagnetLinePrefab.SetActive( _Show ) ;
+		
+						
+	}	
 }
 
 
