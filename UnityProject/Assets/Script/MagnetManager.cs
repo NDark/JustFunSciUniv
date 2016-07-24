@@ -15,8 +15,13 @@ public enum MagnetManagerState
 public class MagnetManager : MonoBehaviour 
 {
 	public GameObject m_MagnetPrefab = null ;
-	public GameObject m_MagnetLinePrefab = null ;
 	
+	public GameObject m_MagnetLineParent = null ;
+	public GameObject m_MagnetLinePrefab = null ;
+	public float magnetLineArrayWidth = 16 ;
+	public int m_MagnetLineArraySize = 9 ;
+	public List<GameObject> m_MagnetLineObjs = new List<GameObject>() ;
+		
 	public GameObject m_VirtualMagnet = null ;
 	public List<GameObject> m_PotentialVirtualMagnets = new List<GameObject>() ;
 	public List<GameObject> m_TargetMagnets = new List<GameObject>();
@@ -234,6 +239,7 @@ public class MagnetManager : MonoBehaviour
 	
 	public void CalculateVirtualMagnet()
 	{
+		
 		CalculateAndDecideVirtuaMagnet() ;
 
 		
@@ -298,7 +304,7 @@ public class MagnetManager : MonoBehaviour
 //		Debug.Log( "toN=" + toN );
 //		Debug.Log( "combinedTangent=" + combinedTangent );
 
-		Quaternion ret = Quaternion.LookRotation( combinedTangent , upVec ) ;
+		Quaternion ret = Quaternion.LookRotation( combinedTangent , Vector3.forward * -1.0f  ) ;
 		return ret ;
 	}
 
@@ -586,6 +592,9 @@ public class MagnetManager : MonoBehaviour
 	
 		ShowMagnetLine( false ) ;
 		
+		CalculateAndCreateMagnetLineObject() ;
+		
+		
 		GenerateRandomTargets() ;// generate to m_TargetParent
 		
 		
@@ -642,17 +651,17 @@ public class MagnetManager : MonoBehaviour
 		*/
 		CalculateVirtualMagnet() ;
 		
+		RotateMagnetLineObjects() ;
 	}	
 	
 	void Flow_MagnetManagerStateWaitingVirtualMagnetAnimation()
 	{
 		if( true == CheckIfVirtualMagnetIsStopped() )
 		{
+			
 			StartRotateTargetMagnetRotateMagnet() ;
 			m_State = MagnetManagerState.WaitingTargetMagnetAnimation ;
-			ShowMagnetLine( true 
-			               , m_VirtualMagnetPosition 
-			               , m_VirtualMagnet.transform.rotation ) ;
+			ShowMagnetLine( true ) ;
 		}	
 	}
 	
@@ -846,35 +855,69 @@ public class MagnetManager : MonoBehaviour
 		this.m_SelectionSprite.transform.position = viewport ;
 		this.m_SelectionSprite.SetDimensions( 80 , 80 ) ;
 	}
-
+	
 	private void ShowMagnetLine( bool _Show )
 	{
-		Vector3 _Pos = Vector3.zero ;
-		Quaternion _Rotation = Quaternion.identity ;
+		if( null == m_MagnetLineParent )
+		{
+			return ;
+		}
 		
-		ShowMagnetLine( _Show , _Pos , _Rotation ) ;
+		m_MagnetLineParent.SetActive( _Show ) ;
+		
+						
+	}	
+	
+	private void RotateMagnetLineObjects()
+	{
+		Debug.LogWarning("RotateMagnetLineObjects()");
+		foreach( GameObject obj in m_MagnetLineObjs )
+		{
+			RotateToVec r = obj.AddComponent<RotateToVec>() ;
+			if( null != r )
+			{
+				r.m_ReferenceTransform = m_VirtualMagnet.transform ;
+				r.CalculateTargetPose() ;
+			}
+		}
 		
 	}
 	
-	private void ShowMagnetLine( bool _Show 
-		, Vector3 _Pos 
-		, Quaternion _Rotation )
+	private void CalculateAndCreateMagnetLineObject()
 	{
+		if( null == m_MagnetLineParent )
+		{
+			return ;
+		}
+		
 		if( null == m_MagnetLinePrefab )
 		{
 			return ;
 		}
 		
-		if( true == _Show )
+		
+		m_MagnetLineObjs.Clear() ;
+		
+		float scale = magnetLineArrayWidth / (float)(m_MagnetLineArraySize) ;
+		for( int j = 0 ; j < m_MagnetLineArraySize ; ++j )
 		{
-			m_MagnetLinePrefab.transform.position = _Pos ;
-			m_MagnetLinePrefab.transform.rotation = _Rotation ;
+			for( int i = 0 ; i < m_MagnetLineArraySize ; ++i )
+			{
+				GameObject addObj  = GameObject.Instantiate( m_MagnetLinePrefab ) as GameObject ;
+				
+				if( null != addObj )
+				{
+					addObj.name = i.ToString() + " " + j.ToString() ;
+					addObj.transform.parent = m_MagnetLineParent.transform ;
+					addObj.transform.position = 
+						new Vector3( -1 * scale * (m_MagnetLineArraySize/2) +  i * scale 
+						            ,  -1 * scale * (m_MagnetLineArraySize/2) + j * scale 
+										, 0.0f ) ;
+					m_MagnetLineObjs.Add( addObj ) ;
+				}
+			}
 		}
-		
-		m_MagnetLinePrefab.SetActive( _Show ) ;
-		
-						
-	}	
+	}
 }
 
 
